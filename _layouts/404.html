@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+{% seo %}
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    {% include head-custom.html %}
+    <title>Page Not Found</title>
+  </head>
+  <body>
+    <main id="content" class="main-content" role="main">
+      {{ content }}
+      <footer class="site-footer">
+        <hr>
+        This website is maintained by <a href="https://github.com/Allax0007">Allax0007</a>.
+      </footer>
+    </main>
+  </body>
+</html>

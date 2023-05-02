@@ -4,6 +4,7 @@ layout: default
 
 Text can be **bold**, _italic_, or ~~strikethrough~~.
 
+[財務管理期末報告](./1112CFfinal).
 [Link to another page](./another-page.html).
 
 There should be whitespace between paragraphs.

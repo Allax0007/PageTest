@@ -1,6 +1,5 @@
 ---
 layout: default
-title: PageTest
 ---
 
 Text can be **bold**, _italic_, or ~~strikethrough~~.

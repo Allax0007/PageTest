@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Computer Organization
-subscription: Chapter 4
+description: Chapter 4
 ---
 
 Text can be **bold**, _italic_, or ~~strikethrough~~.

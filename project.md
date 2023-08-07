@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Project
-description: Act. 2023
+description: Oct. 2023
 ---
 ## Deploying a Database project in Kubernetes 
 ### Create Deployment.yaml 

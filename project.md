@@ -1,3 +1,8 @@
+---
+layout: default
+title: Project
+description: Act. 2023
+---
 ## Deploying a Database project in Kubernetes 
 ### Create Deployment.yaml 
 We would deploy two pods: the <code>phpapp</code> pod contains a container that runs the code we wrote, and the <code>database</code> pod contains two containers—one running MySQL and the other running phpMyAdmin.

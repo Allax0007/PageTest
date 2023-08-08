@@ -1,17 +1,17 @@
 ---
 layout: default
 title: Project
-description: Oct. 2023
+description: 'Last edited: 8.8.2023'
 ---
 ## Deploying a Database project in Kubernetes 
-### Create Deployment.yaml 
-We would deploy two pods: the <code>phpapp</code> pod contains a container that runs the code we wrote, and the <code>database</code> pod contains two containers—one running MySQL and the other running phpMyAdmin.
+### Create <i><u>Deployment.yaml</u></i> 
+We would deploy two pods: the <code><i>phpapp</i></code> pod contains a container that runs the code we wrote, and the <code><i>database</i></code> pod contains two containers—one running <i>MySQL</i> and the other running <i>phpMyAdmin</i>.
 
-Next, we create three services: <code>db-svc</code>, <code>phpapp-svc</code>, and <code>phpadmin-svc</code>. We specify the clusterIP of <code>db-svc</code> to allow other services to access it more conveniently.
+Next, we create three services: <code><i>db-svc</i></code>, <code><i>phpapp-svc</i></code>, and <code><i>phpadmin-svc</i></code>. We specify the <b>clusterIP</b> of <code><i>db-svc</i></code> to allow other services to access it more conveniently.
 
 Lastly, make sure to set the types of all services as <b>NodePort</b> (default: clusterIP), or you will only be able to access them from the local machine.
 ```yaml
-/* PHPAPP DEPLOY */
+# PHPAPP DEPLOY
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,7 +33,7 @@ spec:
         ports:
         - containerPort: 8000
 ---
-/* DATABASE DEPLOY */
+# DATABASE DEPLOY 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -67,7 +67,7 @@ spec:
         ports:
         - containerPort: 7000
 ---
-/* MySQL SERVICE */
+# MySQL SERVICE 
 apiVersion: v1
 kind: Service
 metadata:
@@ -84,7 +84,7 @@ spec:
     run: db
   type: ClusterIP
 ---
-/* PHPAPP SERVICE */
+# PHPAPP SERVICE 
 apiVersion: v1
 kind: Service
 metadata:
@@ -101,7 +101,7 @@ spec:
     run: phpapp
   type: NodePort
 ---
-/* PhpMyAdmin DEPLOY */
+# PhpMyAdmin DEPLOY 
 apiVersion: v1
 kind: Service
 metadata:
@@ -118,13 +118,16 @@ spec:
     run: db
   type: NodePort
 ```
+> The port of the service must be equal to the corresponding container port.
 
-> NOTE: In YAML, each document or resource definition should be separated by three hyphens (<code>---</code>)  
+> The Kubernetes control plane allocates a port from a range specified by <code><i>--service-node-port-range</i></code> flag <sub>(default: 30000-32767)</sub>. You can modify the value in <i><u>/etc/kubernetes/manifests/kube-apiserver.yaml</u></i>.
+
+> In YAML, each document or resource definition should be separated by three hyphens (<code>---</code>)  
   You can also write the file separately, depending on your needs.
 
 ### Create ConfigMap & Secret
-To deploy our deployment more easily, we need to create a ConfigMap.  
-In the ConfigMap, set <code>test</code> as the database we use, the <i>specified clusterIP</i> as <code>PMA_HOST</code>, and the <i>specified port of db-svc</i> as <code>PMA_PORT</code>.
+To deploy our deployment more easily, we need to create a <i>ConfigMap</i>.  
+In the <i>ConfigMap</i>, set <code>test</code> as the database we use, the specified <b>clusterIP</b> as <code>PMA_HOST</code>, and the specified <b>port</b> of <code>db-svc</code> as <code>PMA_PORT</code>.
 ```shell
 kubectl create cm db-config --from-literal=MYSQL_DATABASE=test
 kubectl create cm phpadmin-config --from-literal=PMA_HOST=10.107.0.1 --from-literal=PMA_PORT=3306
@@ -133,8 +136,8 @@ Lastly, create a secret to set your <code>MYSQL_ROOT_PASSWORD</code>
 ```shell
 kubectl create secret generic db-secret --from-literal=MYSQL_ROOT_PASSWORD=<password>
 ```
-### What <code>phpapp</code> Do
-In the <code>phpapp</code> pod, we build a code that queries MySQL in the <code>database</code> pod and performs <code>INSERT</code> <code>UPDATE</code> operations with the <code>test</code> database.
+### What <code><i>phpapp</i></code> Do
+In the <code><i>phpapp</i></code> pod, we build a code that queries <i>MySQL</i> in the <code><i>database</i></code> pod and performs <code>INSERT</code> <code>UPDATE</code> operations with the <code><i>test</i></code> database.
 
 ## Set Up a Prometheus Monitoring Environment Using Helm Chart 
 ### Install Helm 
@@ -145,19 +148,20 @@ chmod 700 get_helm.sh
 helm
 ```
 ### Initialize a Helm Chart Repository 
-Add repository to Helm as below:
+Add repository to Helm and update local repositories.
 ```shell
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 ```
+In the following steps, we will install <code><i>kube-prometheus-stack</i></code>, which collects <code>Kubernetes manifests</code>, <code>Grafana dashboards</code>, and <code>Prometheus rules</code> combined with documentation and scripts.
 ### Install Prometheus 
 ```shell
 helm install prom prometheus-community/kube-prometheus-stack -n monitor --create-namespace
 ```
-It will install <code>kube-prometheus-stack</code> chart in a namespace called <code>monitor</code>.
+It will install <code><i>kube-prometheus-stack</i></code> chart in a namespace called <code><i>monitor</i></code>.
 
 ## Sending Alertmanager Alerts to Discord Server Using Webhook 
-### Clone <i>values.yaml</i> 
+### Clone <i><u>values.yaml</u></i> 
 To efficiently configure the repository, we need to copy a file to the current directory.
 ```shell
 helm show values prometheus-community/kube-prometheus-stack --version 48.2.1 > values.yaml

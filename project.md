@@ -280,7 +280,7 @@ You can also modify <i>service.type</i> after applying changes.
 ```shell
 kubectl patch svc svcName -n monitor -p '{"spec": {"type": "NodePort"}}'
 ```
-> Changing the type of the service using <code>kubectl patch</code> may result in the NodePort not being the value set in <i><u>values.yaml</u></i>
+> Changing the type of the service using <code>kubectl patch</code> may result in the NodePort not being the value set in <i><u>values.yaml</u></i>  
 #### grafana.enabled <sub>[line 857]</sub> (optional)
 To save the resources, if Grafana is not needed, it's recommended to set it to false.
 ### Applying the Changes 

@@ -6,10 +6,6 @@ description: 'Last edited: 8.8.2023'
 ## Deploying a Database project in Kubernetes 
 ### Create <i><u>Deployment.yaml</u></i> 
 We would deploy two pods: the <code><i>phpapp</i></code> pod contains a container that runs the code we wrote, and the <code><i>database</i></code> pod contains two containers—one running <i>MySQL</i> and the other running <i>phpMyAdmin</i>.
-
-Next, we create three services: <code><i>db-svc</i></code>, <code><i>phpapp-svc</i></code>, and <code><i>phpadmin-svc</i></code>. We specify the <b>clusterIP</b> of <code><i>db-svc</i></code> to allow other services to access it more conveniently.
-
-Lastly, make sure to set the types of all services as <b>NodePort</b> (default: clusterIP), or you will only be able to access them from the local machine.
 ```yaml
 # PHPAPP DEPLOY
 apiVersion: apps/v1
@@ -66,7 +62,9 @@ spec:
             name: phpadmin-config
         ports:
         - containerPort: 7000
----
+```
+Next, we create three services: <code><i>db-svc</i></code>, <code><i>phpapp-svc</i></code>, and <code><i>phpadmin-svc</i></code>. We specify the <b>spec.clusterIP</b> of <code><i>db-svc</i></code> to allow other services to access it more conveniently.
+```yaml
 # MySQL SERVICE 
 apiVersion: v1
 kind: Service
@@ -118,6 +116,7 @@ spec:
     run: db
   type: NodePort
 ```
+Make sure to set the <b>spec.types</b> of all services as <b>NodePort</b> <sub>(default: clusterIP)</sub>, or you will only be able to access them from the local machine.
 > The port of the service must be equal to the corresponding container port.
 
 > The Kubernetes control plane allocates a port from a range specified by <code><i>--service-node-port-range</i></code> flag <sub>(default: 30000-32767)</sub>. You can modify the value in <i><u>/etc/kubernetes/manifests/kube-apiserver.yaml</u></i>.
@@ -164,12 +163,12 @@ It will install <code><i>kube-prometheus-stack</i></code> chart in a namespace c
 ### Clone <i><u>values.yaml</u></i> 
 To efficiently configure the repository, we need to copy a file to the current directory.
 ```shell
-helm show values prometheus-community/kube-prometheus-stack --version 48.2.1 > values.yaml
+helm show values prometheus-community/kube-prometheus-stack > values.yaml
 ```
 
 ### Modify the Configs in <i>values.yaml</i> 
-* <b>additionalPrometheusRulesMap</b> <sub>[line 164]</sub>  
-You can apply your own rule here.  
+#### additionalPrometheusRulesMap <sub>[line 164]</sub>  
+You can apply your rule here.  
 e.g., The following rules will trigger an alert when the corresponding events occur.
 ```yaml
 additionalPrometheusRulesMap:
@@ -202,7 +201,7 @@ additionalPrometheusRulesMap:
              summary: High CPU load (instance {{ $labels.instance }})
              description: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 ```
-* <b>alertmanager.config</b> <sub>[line 249]</sub>
+#### alertmanager.config <sub>[line 249]</sub>
 Here is an example of sending an alert to the Discord server.
 ```yaml
   config:
@@ -236,13 +235,24 @@ Here is an example of sending an alert to the Discord server.
       - channel: 'alerts'
         username: "Alert"
         api_url: 'https://discord.com/api/webhooks/*******************/************************************************/slack'
-
+        text: '{{ template "slack.myorg.text" . }}'
+        send_resolved: true
     templates:
     - '/etc/alertmanager/config/*.tmpl'
 ```
-※ <b>If you want to access Prometheus from another IP, you should make the following modifications.</b>
+Replace <code>api_url</code> with the Webhook URL of your Discord server.
 
-* <b>alertmanager.service.type</b> <sub>[line 464]</sub> (optional)
+If you want to receive notifications only for <i>FIRING</i> cases, you can remove <code>send_resolved: true</code> <sub>(default: false)</sub>
+#### alertmanager.templateFiles <sub>[line 313]</sub> 
+Uncomment the lines in the provided template. Alternatively, you can create your template here.
+```yaml
+  templateFiles: 
+  #
+  ## An example template:
+    # Uncomment starting from this line...
+```
+<mark>If you want to access Prometheus from external IP, you should make modifications as below.</mark>
+#### alertmanager.service.type <sub>[line 464]</sub> (optional)
 ```yaml
   ## Configuration for Alertmanager service
   ##
@@ -254,8 +264,7 @@ Here is an example of sending an alert to the Discord server.
 
     type: NodePort
 ```
-
-* <b>prometheus.service.type</b> <sub>[line 2574]</sub> (optional)
+#### prometheus.service.type <sub>[line 2574]</sub> (optional)
 ```yaml
   ## Configuration for Prometheus service
   ##
@@ -267,19 +276,126 @@ Here is an example of sending an alert to the Discord server.
 
     type: NodePort
 ```
-You can also modify service.type after applying changes.
+You can also modify <i>service.type</i> after applying changes.
 ```shell
 kubectl patch svc svcName -n monitor -p '{"spec": {"type": "NodePort"}}'
 ```
-> <b>NOTE: Changing the type of the service using <code>kubectl patch</code> may result in the NodePort not being the value set in values.yaml</b>
-
+> Changing the type of the service using <code>kubectl patch</code> may result in the NodePort not being the value set in <i><u>values.yaml</u></i>
+#### grafana.enabled <sub>[line 857]</sub> (optional)
+To save the resources, if Grafana is not needed, it's recommended to set it to false.
 ### Applying the Changes 
 ```shell
 helm upgrade prom -f values.yaml prometheus-community/kube-prometheus-stack -n monitor
 ```
 After making the modifications, you can go to [Prometheus Server](http://192.168.158.66:30090) to check if the custom rule has been applied. 
 
-If <i>AlertmanagerClusterFailedToSendAlerts</i> is inactive, you should be able to receive messages in your Discord server.
+## Monitoring the Status of Nodes with Python
+First, make sure you have the <code>requests</code> and <code>matplotlib</code> libraries installed. If not, you can install them using <code>pip install requests matplotlib</code>.
+
+To get memory usage of each pod from Prometheus every second and draw a dynamic graph, you can use the <code>matplotlib</code> library in Python to create the graph. Additionally, you can use the <code>FuncAnimation</code> class from <code>matplotlib.animation</code> to continuously update the graph with new data at regular intervals.
+
+Here is an example to make a dynamic line chart, which marks the CPU usage and memory usage of containers.
+
+Use a global variable <code>historical_data</code> to store historical data. When updating the chart, we save the new memory usage data into this dictionary.
+```python3
+historical_data = {'cpu': {}, 'memory': {}}
+```
+Set the values for the API and query (<i>promQL</i>).
+```python3
+    url = 'http://prometheus_server_ip:30090/api/v1/query'
+    if metric == 'cpu':
+        query = 'sum by(pod) (node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{namespace!="kube-system"})'
+    elif metric == 'memory':
+        query = 'sum(container_memory_working_set_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace!="kube-system"}) by (pod)'
+    else:
+        return None
+
+    params = {'query': query}
+```
+
+Replace <code>prometheus_server_ip</code> with the IP address or domain name of your Prometheus server and <code>your_namespace</code> with the desired Kubernetes namespace containing the pods you want to monitor.
+
+Request Prometheus to get data.
+```python3
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        if data['status'] == 'success':
+            return data['data']['result']
+        else:
+            print('Error:', data['error'])
+            return None
+
+    except requests.exceptions.RequestException as e:
+        print('Error:', e)
+        return None
+```
+Sort the data by its pod name and append to <code>historical_data</code>
+```python3
+        # Update CPU Usage
+        for pod_data in pod_cpu_usage:
+            pod_name = pod_data['metric']['pod']
+            cpu_usage_rate = float(pod_data['value'][1])
+
+            if pod_name not in historical_data['cpu']:
+                historical_data['cpu'][pod_name] = {'time': [], 'usage': []}
+
+            historical_data['cpu'][pod_name]['time'].append(current_time)
+            historical_data['cpu'][pod_name]['usage'].append(cpu_usage_rate)
+        # Update memory Usage
+        for pod_data in pod_memory_usage:
+            pod_name = pod_data['metric']['pod']
+            memory_usage_bytes = float(pod_data['value'][1])
+            memory_usage_mb = memory_usage_bytes / (1024 ** 2)
+
+            if pod_name not in historical_data['memory']:
+                historical_data['memory'][pod_name] = {'time': [], 'usage': []}
+
+            historical_data['memory'][pod_name]['time'].append(current_time)
+            historical_data['memory'][pod_name]['usage'].append(memory_usage_mb)
+```
+Create the figure.
+```python3
+        plt.clf()
+        # CPU Usage Figure
+        plt.subplot(2, 1, 1)
+        plt.title("CPU Usage of Each Pod Over Time")
+        for pod_name, data in historical_data['cpu'].items():
+            time_data = data['time']
+            cpu_data = data['usage']
+            plt.plot(time_data, cpu_data, linewidth=3, label=f"{pod_name} ({cpu_data[-1]:.4f})")
+
+        plt.xlabel('Time (seconds)')
+        plt.ylabel('CPU Usage')
+        plt.legend(loc='center left')
+        plt.xticks(rotation=45, ha='right')
+        plt.grid(True) 
+
+        # Memory Usage Figure
+        plt.subplot(2, 1, 2)
+        plt.title("Memory Usage of Each Pod Over Time", y=-0.15)
+        for pod_name, data in historical_data['memory'].items():
+            time_data = data['time']
+            memory_data = data['usage']
+            plt.plot(time_data, memory_data, linewidth=3, label=f"{pod_name} ({memory_data[-1]:.2f} MB)")
+
+        plt.ylabel('Memory Usage (MB)')
+        plt.legend(loc='center left')
+        plt.xticks(rotation=45, ha='right', visible=False)
+        plt.grid(True) 
+        plt.tight_layout() 
+```
+In order to ensure the successful update of the plots, it is necessary to use <code>clf()</code> to clear the current figure.   
+Finally, output the figure and update it every 100 ms.
+```python3
+if __name__ == "__main__":
+    fig = plt.figure(figsize=(10, 6))
+    ani = FuncAnimation(fig, update_graph, interval=100)
+    plt.show()
+```
+<code>figsize</code> is used to set the figure size, a is the width of the figure, b is the height of the figure <sub>(unit: inch)</sub>.
 
 ## Troubleshooting 
 At the beginning, you may encounter many errors. The following will analyze and solve them one by one.
@@ -290,6 +406,13 @@ If the capacity is sufficient and kubelet continues to report errors, you can go
 If the issue persists, please contact your device provider.
 
 ### Alertmanager - Many Alerts Firing 
+#### AlertmanagerClusterFailedToSendAlerts 
+If your <code>api_url</code> or <b>alertmanager.templateFiles</b> is invalid, it will be in a FIRING state.
+
+* Please check whether your <code>api_url</code> has any issues. Otherwise, your <code>api_url</code> should be able to receive messages in your Discord server.
+
+* Please refrain from altering the <b>alertmanager.templateFiles</b> unless you are familiar with handling it. It is recommended to keep it as the default setting.
+
 
 #### Watchdog 
 This is an alert that should always be firing to certify that Alertmanager is working properly. Hence, we have nothing to do with it. 

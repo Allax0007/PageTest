@@ -1,10 +1,10 @@
 ---
 layout: default
 title: Project
-description: 'Last edited: 8.8.2023'
+description: 'Last edited: 10.8.2023'
 ---
 ## Deploying a Database project in Kubernetes 
-### Create <i><u>Deployment.yaml</u></i> 
+### Create <u>_Deployment.yaml_</u> 
 We would deploy two pods: the _`phpapp`_ pod contains a container that runs the code we wrote, and the _`database`_ pod contains two containers—one running _MySQL_ and the other running _phpMyAdmin_.
 ```yaml
 # PHPAPP DEPLOY
@@ -119,7 +119,7 @@ spec:
 Make sure to set the **spec.types** of all services as **NodePort** <sub>(default: clusterIP)</sub>, or you will only be able to access them from the local machine.
 > The port of the service must be equal to the corresponding container port.
 
-> The Kubernetes control plane allocates a port from a range specified by _`--service-node-port-range`_ flag <sub>(default: 30000-32767)</sub>. You can modify the value in <i><u>/etc/kubernetes/manifests/kube-apiserver.yaml</u></i>.
+> The Kubernetes control plane allocates a port from a range specified by _`--service-node-port-range`_ flag <sub>(default: 30000-32767)</sub>. You can modify the value in <u>_/etc/kubernetes/manifests/kube-apiserver.yaml_</u>.
 
 > In YAML, each document or resource definition should be separated by three hyphens (`---`)  
   You can also write the file separately, depending on your needs.
@@ -160,13 +160,13 @@ helm install prom prometheus-community/kube-prometheus-stack -n monitor --create
 It will install _`kube-prometheus-stack`_ chart in a namespace called _`monitor`_.
 
 ## Sending Alertmanager Alerts to Discord Server Using Webhook 
-### Clone <i><u>values.yaml</u></i> 
+### Clone <u>_values.yaml_</u> 
 To efficiently configure the repository, we need to copy a file to the current directory.
 ```shell
 helm show values prometheus-community/kube-prometheus-stack > values.yaml
 ```
 
-### Modify the Configs in _values.yaml_ 
+### Modify the Configs in <u>_values.yaml_</u> 
 #### additionalPrometheusRulesMap <sub>[line 164]</sub>  
 You can apply your rule here.  
 e.g., The following rules will trigger an alert when the corresponding events occur.
@@ -280,9 +280,11 @@ You can also modify _service.type_ after applying changes.
 ```shell
 kubectl patch svc svcName -n monitor -p '{"spec": {"type": "NodePort"}}'
 ```
-> Changing the type of the service using `kubectl patch` may result in the NodePort not being the value set in <i><u>values.yaml</u></i>  
+> Changing the type of the service using `kubectl patch` may result in the NodePort not being the value set in <u>_values.yaml_</u>  
+
 #### grafana.enabled <sub>[line 857]</sub> (optional)
 To save the resources, if Grafana is not needed, it's recommended to set it to false.
+
 ### Applying the Changes 
 ```shell
 helm upgrade prom -f values.yaml prometheus-community/kube-prometheus-stack -n monitor

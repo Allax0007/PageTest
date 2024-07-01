@@ -166,7 +166,7 @@ To efficiently configure the repository, we need to copy a file to the current d
 helm show values prometheus-community/kube-prometheus-stack > values.yaml
 ```
 
-### Modify the Configs in <u>_values.yaml_</u> 
+### Modify the Configs in _<u>values.yaml</u>_ 
 #### additionalPrometheusRulesMap <sub>[line 164]</sub>  
 You can apply your rule here.  
 e.g., The following rules will trigger an alert when the corresponding events occur.

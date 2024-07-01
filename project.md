@@ -4,7 +4,7 @@ title: Project
 description: 'Last edited: 10.8.2023'
 ---
 ## Deploying a Database project in Kubernetes 
-### Create <u>_Deployment.yaml_</u> 
+### Create _<u>Deployment.yaml</u>_ 
 We would deploy two pods: the _`phpapp`_ pod contains a container that runs the code we wrote, and the _`database`_ pod contains two containers—one running _MySQL_ and the other running _phpMyAdmin_.
 ```yaml
 # PHPAPP DEPLOY

@@ -2,7 +2,7 @@
 layout: default
 title: Hello
 ---
-## Reports
-
+## Presentations
+[Logistic Regression](./logReg)
 ## Notes
 [Database Project](./project)
